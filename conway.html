@@ -1,0 +1,313 @@
+<html>
+<body>
+	<canvas awidth=800 aheight=500 style='position: relative; top: 0px; left:0px; background-color: lightgreen' id='tablica'></canvas>
+	<br>
+	<textarea id='komorki' style='width: 800px; height: 70px;'></textarea>
+	<textarea id='ladowanie' style='width: 800px; height: 70px;'></textarea>
+	<br>
+	<input type='button' value='Start' id='btnStart'>
+	<input type='button' value='Stop' id='btnStop'>
+	<input type='button' value='Load' id='btnLoad'>
+</body>
+
+<script>
+	var step_no=0;
+	var running=false;
+
+	var szerokosc=70;
+	var wysokosc=35;
+	var bok=15; // bok kwadratu pola
+	
+	var plansza=new Array(wysokosc * szerokosc);
+	for (var i=0; i< plansza.length; i++) {
+		plansza[i]=0;
+	}
+
+	/*
+	plansza[22]=1;
+	plansza[23]=1;
+	plansza[24]=1;
+	*/
+	
+	/*
+	// slider
+	plansza[117]=1;
+	plansza[118]=1;
+	plansza[119]=1;
+	plansza[137]=1;
+	plansza[158]=1;
+	*/
+
+	/*
+	plansza[0]=1;
+	plansza[1]=1;
+	plansza[2]=1;
+	*/
+	
+	//alert(plansza);
+	
+	var tablica=document.getElementById('tablica');
+	var ctx=tablica.getContext('2d');
+
+	//var width=plansza.width;
+	//var height=plansza.height;
+	
+	//alert('width: ' + width + '\n' + 'height: ' + height);
+	var width=szerokosc * bok;
+	var height=wysokosc * bok;
+	tablica.width=width;
+	tablica.height=height;
+	
+	liniePoziome(ctx, width, height, bok);
+	liniePionowe(ctx, width, height, bok);
+	plotPlansza(plansza, ctx);
+
+	setTimeout(function () {
+		//do_Krok();
+	}, 100);
+	
+	function do_Krok() {
+		if (running) {
+			step_no++;
+			//console.log('step: ' + step_no);
+			//plansza=krok(plansza);
+			krok();
+			
+			ctx.clearRect(0, 0, tablica.width, tablica.height);
+			
+			liniePoziome(ctx, width, height, bok);
+			liniePionowe(ctx, width, height, bok);
+			plotPlansza(plansza, ctx);
+			
+			var div_komorki=document.getElementById('komorki');
+			
+			var str='';
+			for (var idx=0; idx < plansza.length; idx++) {
+				if (plansza[idx] != 0) {
+					if (str != '')
+						str+=','
+					str+=idx;
+				}
+			}
+			div_komorki.value=str;
+			
+			setTimeout(function () {
+				do_Krok();
+			}, 300);		
+		}	
+	}
+	
+	function liniePoziome(ctx, width, height, bok) {
+		var y=0;
+
+		ctx.beginPath();
+		while (y <= height) {
+			ctx.moveTo(0, y); //rowanie zaczynamy od punktu (0,y)- tam wi�c przesuwamy nasze pi�rko
+			ctx.lineTo(width-1, y);
+			y+=bok;
+		}	
+		ctx.stroke();
+	}
+	
+	function liniePionowe(ctx, width, height, bok) {
+		var x=0;
+
+		ctx.beginPath();
+		while (x <= width) {
+			ctx.moveTo(x, 0); //rysowanie zaczynamy od punktu (x,0)- tam wi�c przesuwamy nasze pi�rko
+			ctx.lineTo(x, height-1);
+			x+=bok;
+		}	
+		ctx.stroke();
+	}
+	
+	function plotPlansza(plansza, ctx) {
+		var zywa;
+		for (var idx=0; idx < plansza.length; idx++) {
+			zywa=plansza[idx];
+			plotKomorka(idx, ctx, zywa);
+		}
+	}
+	
+	function plotKomorka(idx, ctx, zywa) {
+		var kolumna=idx % szerokosc;
+		var wiersz=Math.floor(idx / szerokosc);
+		
+		//console.log('idx: ' + idx + '  x: ' + kolumna + '   y: ' + wiersz);
+		
+		rysowaniePunktu(ctx, wiersz, kolumna, zywa);
+	}
+	
+	function rysowaniePunktu(ctx, wiersz, kolumna, zywa) {
+		var x=kolumna * bok + Math.round(bok/2);
+		var y=wiersz * bok + Math.round(bok/2);
+		
+		if (zywa == 1) 
+			ctx.fillStyle = "#6D2F00";
+		else
+			ctx.fillStyle = "lightgreen";
+		ctx.beginPath();
+		ctx.arc(x, y, 5, 0, 2*Math.PI, true);
+		ctx.fill();
+	}
+	
+	function iloscSasiadow(idx) {
+		var kolumna=idx % szerokosc;
+		var wiersz=Math.floor(idx / szerokosc);
+
+		/*
+		var ilosc=0;
+		if ((wiersz == 0) && (kolumna == 1)) {
+			ilosc+=sprawdzenie(kolumna, wiersz-1);
+			alert('1' + '\n' + ilosc + '\n' + 'wiersz: ' + wiersz + '\n' + 'kolumna: ' + kolumna);
+			ilosc+=sprawdzenie(kolumna+1, wiersz-1);
+			//alert('2' + '\n' + ilosc);
+			ilosc+=sprawdzenie(kolumna+1, wiersz);
+			//alert('3' + '\n' + ilosc);
+			ilosc+=sprawdzenie(kolumna+1, wiersz+1);
+			//alert('4' + '\n' + ilosc);
+			ilosc+=sprawdzenie(kolumna, wiersz+1);
+			//alert('5' + '\n' + ilosc);
+			ilosc+=sprawdzenie(kolumna-1, wiersz+1);
+			//alert('6' + '\n' + ilosc);
+			ilosc+=sprawdzenie(kolumna-1, wiersz);
+			//alert('7' + '\n' + ilosc);
+			ilosc+=sprawdzenie(kolumna-1, wiersz-1);
+			//alert('8' + '\n' + ilosc);
+		}
+		*/
+		
+		
+		var ilosc=0;
+		ilosc+=sprawdzenie(kolumna, wiersz-1);
+		ilosc+=sprawdzenie(kolumna+1, wiersz-1);
+		ilosc+=sprawdzenie(kolumna+1, wiersz);
+		ilosc+=sprawdzenie(kolumna+1, wiersz+1);
+		ilosc+=sprawdzenie(kolumna, wiersz+1);
+		ilosc+=sprawdzenie(kolumna-1, wiersz+1);
+		ilosc+=sprawdzenie(kolumna-1, wiersz);
+		ilosc+=sprawdzenie(kolumna-1, wiersz-1);
+		
+		return ilosc;
+	}
+
+	function sprawdzenie(kolumna, wiersz) {
+		if (kolumna >= szerokosc)
+			kolumna=0;
+		if (wiersz >= wysokosc)
+			wiersz=0;
+		if (kolumna < 0)
+			kolumna=szerokosc-1;
+		if (wiersz < 0)
+			wiersz=wysokosc-1;
+		
+		idx=wiersz*szerokosc + kolumna;
+		
+		var zywa=plansza[idx];
+		
+		return zywa;
+	}
+	
+	function krok() {
+		//alert(plansza);
+		
+		var zywa;
+		var ilosc;
+		var plansza2=new Array(wysokosc * szerokosc);
+		for (var idx=0; idx < plansza.length; idx++) {
+			zywa=plansza[idx];
+			ilosc=iloscSasiadow(idx);
+			if (zywa==1) {
+				if ((ilosc == 2) || (ilosc == 3)) 
+					plansza2[idx]=1;
+				else {
+					plansza2[idx]=0;
+				}
+			}
+			else {
+				if (ilosc == 3)
+					plansza2[idx]=1;
+				else
+					plansza2[idx]=0;
+			}
+			
+			//alert('idx: ' + idx + '\n' + plansza2);
+		}
+
+		for (var idx=0; idx < plansza.length; idx++) {
+			plansza[idx]=plansza2[idx];
+			//plansza[idx]=1;
+		}
+		
+		//alert(plansza);
+		//return plansza2;
+	}
+	
+	tablica.onclick=function(event) {
+		var x=event.offsetX;
+		var y=event.offsetY;
+		
+		var kolumna=Math.floor(x / bok);
+		var wiersz=Math.floor(y / bok);
+		
+		var idx=wiersz * szerokosc + kolumna;
+		
+		var zywa=plansza[idx];
+		if (zywa == 1)
+			zywa=0;
+		else
+			zywa=1;
+		plansza[idx]=zywa;
+		rysowaniePunktu(ctx, wiersz, kolumna, zywa);		
+
+		// console.log(wiersz, kolumna);
+		/*
+		var str='';
+		for (i in event) {
+			str+=i + ': ' + event[i] + '\n';
+		}
+		console.log(str);
+		*/
+	}
+	
+	var btnStart=document.getElementById('btnStart');
+	btnStart.onclick=function() {
+		running=true;
+		setTimeout(function () {
+			do_Krok();			
+		}, 100);
+	}
+	
+	var btnStop=document.getElementById('btnStop');
+	btnStop.onclick=function() {
+		running=false;
+	}	
+	
+	var btnLoad=document.getElementById('btnLoad');
+	btnLoad.onclick=function() {
+		var div_komorki=document.getElementById('ladowanie');
+		var str=div_komorki.value;
+		//alert(str);
+		var arr=str.split(',');
+		for (var idx=0; idx < plansza.length; idx++)
+			plansza[idx]=0;
+
+		//alert(arr);
+		for (var idx=0; idx < arr.length; idx++)
+			plansza[arr[idx]]=1;
+
+		plotPlansza(plansza, ctx);		
+	}
+	
+	
+	/*
+	var str='';
+	for (i in tablica) {
+		str+=i + ': ' + tablica[i] + '\n';
+	}
+	console.log(str);
+	*/
+		
+</script>
+
+</html>
